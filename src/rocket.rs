@@ -10,7 +10,7 @@ const SPRITE_WIDTH: f32 = 32.0;
 
 const ROTATION_FULCRUM: f32 = SPRITE_WIDTH * 10.0;
 const ROTATION_POWER: f32 = 35.0;
-const ROTATION_DAMPING: f32 = -5.0;
+const ROTATION_DAMPING: f32 = 5.0;
 
 const BOOSTER_POWER: f32 = 500_000.0;
 const DRAG: f32 = -1000.0;
@@ -72,6 +72,7 @@ fn input(
     for (rocket, position, velocity, mut forces, props, children) in query.iter_mut() {
         for &child in children.iter() {
             if let Ok(mut booster_visible) = booster_query.get_mut(child) {
+                // apply drag
                 forces.apply_force_at_point(
                     props,
                     velocity.linvel * DRAG,
@@ -79,43 +80,45 @@ fn input(
                 );
 
                 if input.pressed(rocket.up_key()) {
+                    // booster force
                     forces.apply_force_at_point(
                         props,
-                        (Vec2::new(
-                            -position.position.rotation.angle().sin(),
-                            position.position.rotation.angle().cos(),
-                        ) * BOOSTER_POWER)
-                            .into(),
+                        position
+                            .position
+                            .rotation
+                            .transform_vector(&(Vec2::Y * BOOSTER_POWER).into()),
                         position.position.translation.vector.into(),
                     );
+                    // show booster sprite
                     if !booster_visible.is_visible {
                         booster_visible.is_visible = true;
                     }
                 } else if booster_visible.is_visible {
+                    // hide booster sprite
                     booster_visible.is_visible = false;
                 }
 
+                // magnitude of force to apply at fulcrum
                 let mut rot_force_mag = velocity.angvel * ROTATION_DAMPING;
 
-                if input.pressed(rocket.left_key()) {
+                if input.pressed(rocket.right_key()) {
                     rot_force_mag += ROTATION_POWER;
                 }
 
-                if input.pressed(rocket.right_key()) {
+                if input.pressed(rocket.left_key()) {
                     rot_force_mag -= ROTATION_POWER;
                 }
 
+                // apply rotational force
                 forces.apply_force_at_point(
                     props,
-                    (Vec2::new(
-                        -position.position.rotation.angle().cos(),
-                        -position.position.rotation.angle().sin(),
-                    ) * rot_force_mag
-                        * ROTATION_FULCRUM)
-                        .into(),
                     position
                         .position
-                        .transform_point(&(Vec2::new(0.0, ROTATION_FULCRUM)).into()),
+                        .rotation
+                        .transform_vector(&(Vec2::X * rot_force_mag * ROTATION_FULCRUM).into()),
+                    position
+                        .position
+                        .transform_point(&(Vec2::Y * ROTATION_FULCRUM).into()),
                 );
             }
         }
