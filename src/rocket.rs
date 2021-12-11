@@ -4,6 +4,7 @@ use std::f32::consts::FRAC_PI_2;
 
 const BLUE_SPRITE: &str = "blue-rocket.png";
 const RED_SPRITE: &str = "red-rocket.png";
+const BOOSTER_SPRITE: &str = "booster.png";
 
 const SPRITE_WIDTH: f32 = 32.0;
 
@@ -64,49 +65,60 @@ fn input(
         &RigidBodyVelocity,
         &mut RigidBodyForces,
         &RigidBodyMassProps,
+        &Children,
     )>,
+    mut booster_query: Query<&mut Visible>,
 ) {
-    for (rocket, position, velocity, mut forces, props) in query.iter_mut() {
-        forces.apply_force_at_point(
-            props,
-            velocity.linvel * DRAG,
-            position.position.translation.vector.into(),
-        );
+    for (rocket, position, velocity, mut forces, props, children) in query.iter_mut() {
+        for &child in children.iter() {
+            if let Ok(mut booster_visible) = booster_query.get_mut(child) {
+                forces.apply_force_at_point(
+                    props,
+                    velocity.linvel * DRAG,
+                    position.position.translation.vector.into(),
+                );
 
-        if input.pressed(rocket.up_key()) {
-            forces.apply_force_at_point(
-                props,
-                (Vec2::new(
-                    -position.position.rotation.angle().sin(),
-                    position.position.rotation.angle().cos(),
-                ) * BOOSTER_POWER)
-                    .into(),
-                position.position.translation.vector.into(),
-            )
+                if input.pressed(rocket.up_key()) {
+                    forces.apply_force_at_point(
+                        props,
+                        (Vec2::new(
+                            -position.position.rotation.angle().sin(),
+                            position.position.rotation.angle().cos(),
+                        ) * BOOSTER_POWER)
+                            .into(),
+                        position.position.translation.vector.into(),
+                    );
+                    if !booster_visible.is_visible {
+                        booster_visible.is_visible = true;
+                    }
+                } else if booster_visible.is_visible {
+                    booster_visible.is_visible = false;
+                }
+
+                let mut rot_force_mag = velocity.angvel * ROTATION_DAMPING;
+
+                if input.pressed(rocket.left_key()) {
+                    rot_force_mag += ROTATION_POWER;
+                }
+
+                if input.pressed(rocket.right_key()) {
+                    rot_force_mag -= ROTATION_POWER;
+                }
+
+                forces.apply_force_at_point(
+                    props,
+                    (Vec2::new(
+                        -position.position.rotation.angle().cos(),
+                        -position.position.rotation.angle().sin(),
+                    ) * rot_force_mag
+                        * ROTATION_FULCRUM)
+                        .into(),
+                    position
+                        .position
+                        .transform_point(&(Vec2::new(0.0, ROTATION_FULCRUM)).into()),
+                );
+            }
         }
-
-        let mut rot_force_mag = velocity.angvel * ROTATION_DAMPING;
-
-        if input.pressed(rocket.left_key()) {
-            rot_force_mag += ROTATION_POWER;
-        }
-
-        if input.pressed(rocket.right_key()) {
-            rot_force_mag -= ROTATION_POWER;
-        }
-
-        forces.apply_force_at_point(
-            props,
-            (Vec2::new(
-                -position.position.rotation.angle().cos(),
-                -position.position.rotation.angle().sin(),
-            ) * rot_force_mag
-                * ROTATION_FULCRUM)
-                .into(),
-            position
-                .position
-                .transform_point(&(Vec2::new(0.0, ROTATION_FULCRUM)).into()),
-        );
     }
 }
 
@@ -115,6 +127,8 @@ fn setup(
     asset_server: Res<AssetServer>,
     mut materials: ResMut<Assets<ColorMaterial>>,
 ) {
+    let booster_sprite = materials.add(asset_server.load(BOOSTER_SPRITE).into());
+
     commands
         .spawn_bundle(SpriteBundle {
             material: materials.add(asset_server.load(RED_SPRITE).into()),
@@ -133,7 +147,17 @@ fn setup(
             ..Default::default()
         })
         .insert(ColliderPositionSync::Discrete)
-        .insert(Rocket::Red);
+        .insert(Rocket::Red)
+        .with_children(|parent| {
+            parent.spawn_bundle(SpriteBundle {
+                transform: Transform {
+                    translation: -Vec3::Y * SPRITE_WIDTH,
+                    ..Default::default()
+                },
+                material: booster_sprite.clone(),
+                ..Default::default()
+            });
+        });
 
     commands
         .spawn_bundle(SpriteBundle {
@@ -153,5 +177,15 @@ fn setup(
             ..Default::default()
         })
         .insert(ColliderPositionSync::Discrete)
-        .insert(Rocket::Blue);
+        .insert(Rocket::Blue)
+        .with_children(|parent| {
+            parent.spawn_bundle(SpriteBundle {
+                transform: Transform {
+                    translation: -Vec3::Y * SPRITE_WIDTH,
+                    ..Default::default()
+                },
+                material: booster_sprite.clone(),
+                ..Default::default()
+            });
+        });
 }

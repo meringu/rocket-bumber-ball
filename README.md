@@ -1,4 +1,4 @@
-# Rocket Bumber Ball
+# Rocket Bumper Ball
 
 ![Clippy](https://github.com/meringu/rocket-bumber-ball/actions/workflows/clippy.yml/badge.svg)
 
