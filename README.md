@@ -1,8 +1,8 @@
 # Rocket Bumper Ball
 
-![Clippy](https://github.com/meringu/rocket-bumber-ball/actions/workflows/clippy.yml/badge.svg)
+![Clippy](https://github.com/meringu/rocket-bumper-ball/actions/workflows/clippy.yml/badge.svg)
 
-Check it out at https://rocket-bumber-ball.henare.dev
+Check it out at https://rocket-bumper-ball.henare.dev
 
 ## Development
 
