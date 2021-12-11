@@ -1,0 +1,22 @@
+[package]
+name = "rocket-bumper-ball"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+
+bevy_rapier2d = { version = "0.11.0", features = ["simd-stable"] }
+rand = "0.8.4"
+serde = "1"
+
+# Native
+[target.'cfg(not(target_arch = "wasm32"))'.dependencies]
+bevy = { version = "0.5", default-features = false, features = ["png", "bevy_wgpu", "bevy_winit", "render", "x11"] }
+
+# Web
+[target.'cfg(target_arch = "wasm32")'.dependencies]
+bevy = { version = "0.5", default-features = false, features = ["png", "bevy_winit", "render"] }
+bevy_webgl2 = "0.5"
+gloo-events = "0.1.1"
+wasm-bindgen = "0.2"
+web-sys = { version = "0.3.45", features = ["Element", "Document", "Window"] }
