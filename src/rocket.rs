@@ -69,7 +69,7 @@ fn input(
     for (rocket, position, velocity, mut forces, props) in query.iter_mut() {
         forces.apply_force_at_point(
             props,
-            (velocity.linvel * DRAG).into(),
+            velocity.linvel * DRAG,
             position.position.translation.vector.into(),
         );
 

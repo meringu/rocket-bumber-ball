@@ -1,10 +1,10 @@
-# RPG2022
+# Rocket Bumber Ball
 
-![Clippy](https://github.com/meringu/rpg2022/actions/workflows/clippy_check.yml/badge.svg)
+![Clippy](https://github.com/meringu/rocket-bumber-ball/actions/workflows/clippy.yml/badge.svg)
 
-Check it out at https://rpg.henare.dev
+Check it out at https://rocket-bumber-ball.henare.dev
 
-## Devlopment
+## Development
 
 ### Prerequisites
 
